@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block title %}{{ election.title }} — Vote{% endblock %}
+
+{% block extra_head %}
+<style>
+  .candidate-card { transition: transform .12s; }
+  .candidate-card:hover { transform: translateY(-6px); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card card-modern mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h3 class="mb-1">{{ election.title }}</h3>
+            <p class="text-muted mb-1">{{ election.description }}</p>
+            <small class="text-muted">Start: {{ election.start_time|date:"Y-m-d H:i" }} • End: {{ election.end_time|date:"Y-m-d H:i" }} UTC</small>
+          </div>
+          <div>
+            {% if election.is_active %}
+              <span class="badge bg-success">Ongoing</span>
+            {% elif election.has_ended %}
+              <span class="badge bg-secondary">Closed</span>
+            {% else %}
+              <span class="badge bg-info text-dark">Upcoming</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if election.is_active %}
+      {% if user.is_authenticated %}
+        {% if has_voted %}
+          <div class="alert alert-success">You have already voted in this election.</div>
+        {% else %}
+          <div class="row g-3">
+            {% for candidate in candidates %}
+              <div class="col-md-6">
+                <div class="card card-modern candidate-card">
+                  <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                      <div class="fw-semibold">{{ candidate.name }}</div>
+                      <small class="text-muted">{{ candidate.bio|truncatechars:100 }}</small>
+                    </div>
+                    <div class="text-end">
+                      <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#confirmVoteModal" data-cid="{{ candidate.id }}" data-cname="{{ candidate.name }}">Vote</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% else %}
+        <div class="alert alert-info">Please <a href="{% url 'login' %}?next={{ request.path }}">login</a> to vote.</div>
+      {% endif %}
+    {% elif election.has_ended %}
+      <div class="alert alert-secondary">This election ended. <a href="{% url 'voting:election_results' election.pk %}">View final results</a>.</div>
+    {% else %}
+      <div class="alert alert-info">This election hasn't started yet.</div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card card-modern">
+      <div class="card-body">
+        <h6 class="mb-2">Live counts</h6>
+        <ul class="list-group mb-2">
+          {% for candidate in candidates %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div>{{ candidate.name }}</div>
+              <div id="count-{{ candidate.id }}">{{ candidate.votes.count }}</div>
+            </li>
+          {% endfor %}
+        </ul>
+        <small class="text-muted">Counts update periodically while the election is open.</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Vote confirmation modal -->
+<div class="modal fade" id="confirmVoteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="voteForm" method="post" class="modal-content" action="{% url 'voting:cast_vote' election.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="candidate_id" id="candidateInput">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm your vote</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>You're about to vote for <strong id="candidateName"></strong>. This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Confirm Vote</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Modal setup
+  var confirmModal = document.getElementById('confirmVoteModal');
+  confirmModal.addEventListener('show.bs.modal', function (event) {
+    var button = event.relatedTarget;
+    var cid = button.getAttribute('data-cid');
+    var cname = button.getAttribute('data-cname');
+    document.getElementById('candidateInput').value = cid;
+    document.getElementById('candidateName').textContent = cname;
+  });
+
+  // Polling live counts
+  function fetchCounts(){
+    fetch("{% url 'voting:api_election_counts' election.pk %}")
+      .then(r => r.json())
+      .then(d => {
+        d.counts.forEach(item => {
+          if (item.candidate_id) {
+            var el = document.getElementById('count-' + item.candidate_id);
+            if (el) el.textContent = item.count;
+          }
+        });
+      }).catch(e => console.log('count fetch error', e));
+  }
+
+  // Poll frequently only when active
+  {% if election.is_active %}
+    setInterval(fetchCounts, 6000);
+  {% endif %}
+});
+</script>
+{% endblock %}
+
+{% endblock %}

@@ -1,0 +1,5 @@
+/* small, consistent Bootstrap overrides and helpers */
+.form-control { box-shadow: none; }
+.card-modern { border: 0; border-radius: 12px; }
+.btn-outline-primary { border-radius: 8px; }
+.badge { font-size: 0.75rem; padding: 0.4em 0.6em; border-radius: 0.6rem; }

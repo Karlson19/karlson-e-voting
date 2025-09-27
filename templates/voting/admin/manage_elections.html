@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Manage Elections — Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h2 class="mb-0">Manage Elections</h2>
+    <small class="text-muted">Create, edit, and add candidates</small>
+  </div>
+  <div>
+    <a class="btn btn-success" href="{% url 'voting:admin_create_election' %}">Create Election</a>
+  </div>
+</div>
+
+<table class="table table-hover">
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Start</th>
+      <th>End</th>
+      <th>Candidates</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for e in elections %}
+    <tr>
+      <td>{{ e.title }}</td>
+      <td>{{ e.start_time|date:"Y-m-d H:i" }}</td>
+      <td>{{ e.end_time|date:"Y-m-d H:i" }}</td>
+      <td>{{ e.candidates.count }}</td>
+      <td>
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'voting:admin_add_candidate' e.pk %}">Add Candidate</a>
+        {% if e.has_ended %}
+          <a class="btn btn-sm btn-outline-secondary" href="{% url 'voting:election_results' e.pk %}">Results</a>
+        {% else %}
+          <a class="btn btn-sm btn-outline-info" href="{% url 'voting:election_detail' e.pk %}">View</a>
+        {% endif %}
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="5" class="text-center text-muted">No elections yet.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

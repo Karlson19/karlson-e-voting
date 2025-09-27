@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Register — E-Voting{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card card-modern p-3">
+      <div class="card-body">
+        <h4 class="mb-3">Create an account</h4>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            {{ form.username }}
+            {% if form.username.errors %}<div class="text-danger small">{{ form.username.errors }}</div>{% endif %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            {{ form.email }}
+            {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors }}</div>{% endif %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            {{ form.password1 }}
+            {% if form.password1.errors %}<div class="text-danger small">{{ form.password1.errors }}</div>{% endif %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Confirm password</label>
+            {{ form.password2 }}
+            {% if form.password2.errors %}<div class="text-danger small">{{ form.password2.errors }}</div>{% endif %}
+          </div>
+
+          <div class="d-grid">
+            <button class="btn btn-success" type="submit">Create account</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <p class="text-center mt-3 small">Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
+  </div>
+</div>
+{% endblock %}

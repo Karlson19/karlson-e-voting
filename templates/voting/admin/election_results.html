@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Results — {{ election.title }}{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center">
+  <div>
+    <h3>Results: {{ election.title }}</h3>
+    <small class="text-muted">Ended: {{ election.end_time|date:"Y-m-d H:i" }}</small>
+  </div>
+  <div class="text-end">
+    <strong>Total votes:</strong> {{ total_votes }}
+  </div>
+</div>
+
+<div class="row mt-3">
+  <div class="col-lg-6">
+    <div class="card card-modern p-3">
+      <canvas id="resultsChart" height="180"></canvas>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card card-modern p-3">
+      {% for item in candidates %}
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            <div class="fw-semibold">{{ item.candidate.name }}</div>
+            <div><strong>{{ item.vote_count }}</strong> votes • <small class="text-muted">{{ item.percent }}%</small></div>
+          </div>
+          <div class="progress mt-2" style="height: 14px;">
+            <div class="progress-bar" role="progressbar" style="width: {{ item.percent }}%;" aria-valuenow="{{ item.percent }}" aria-valuemin="0" aria-valuemax="100">
+              {{ item.percent }}%
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<a class="btn btn-secondary mt-3" href="{% url 'voting:admin_manage_elections' %}">Back</a>
+
+{% block extra_js %}
+<script>
+  // Chart.js horizontal bar chart
+  const ctx = document.getElementById('resultsChart').getContext('2d');
+  const labels = [{% for item in candidates %}'{{ item.candidate.name|escapejs }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+  const data = [{% for item in candidates %}{{ item.vote_count }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Votes',
+        data,
+        borderRadius: 6,
+        barThickness: 28,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+      },
+      scales: {
+        x: { beginAtZero: true, ticks: { precision: 0 } }
+      }
+    }
+  });
+</script>
+{% endblock %}
+{% endblock %}
