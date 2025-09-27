@@ -1,4 +1,4 @@
-# KARLSON'S E-VOTING SYSTEM (Django MVP)
+# KARLSON'S E-VOTING SYSTEM (Django)
 
 **A minimal e-voting management system built with Django and Bootstrap.**  
 This repository contains the MVP used for demonstrations and local testing. It is *not* production-ready (no OTP, email verification, or blockchain). The focus is on core functionality: register/login, create/manage elections, add candidates, cast 1 vote per voter, and view results after an election ends.
